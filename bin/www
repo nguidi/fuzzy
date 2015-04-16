@@ -1,0 +1,114 @@
+#!/usr/bin/env node
+
+/**
+* Inicio el servidor express
+
+@return {HTTP APP}
+*/
+
+//	Importo las librerias necesarias para express
+var	app
+=	require('../app')
+,	debug
+=	require('debug')('compras-express:server')
+,	http
+=	require('http')
+
+//	Importo librerias auxiliares
+var	_
+=	require('lodash')
+,	log
+=	require('clog');
+
+//	Seteo en ambiente en el que voy a ejecutar la aplicacion
+app.set('env','development');
+
+//	Obtengo el puerto segun el ambiente en el que estoy
+var	defaultPort
+=	parseInt(process.env.PORT, 10) || 3000
+,	port
+=	isNaN(defaultPort)
+	?	process.env.PORT
+	:	defaultPort;
+
+//	Indico el puerto a utilizar
+app.set('port', port);
+
+//	Creo el servidor HTTP
+var	server
+=	http.createServer(app);
+
+//	Inicializamos la ORM
+app.get('orm').initialize(
+	{
+		adapters:		app.get('adapters')
+	,	connections:	app.get('connections')
+	}
+,	function(err, models)
+	{
+		//	Si ocurrio un error al inicializar la ORM
+		if	(err)
+			throw err;
+
+		_.each(
+			models.collections
+		,	function(collection, name)
+			{
+				if	(!_.has(global,_.capitalize(name)))
+					global[_.capitalize(name)] = collection;
+				else
+					log.error('ORM: El nombre '+name+' no puede ser utilizado. Cambie el nombre del modelo.');
+			}
+		)
+
+		//	Indico el puerto a escuchar
+		server.listen(port);
+
+		//	Escucho si el server se puso en funcionamiento
+		server.on(
+			'listening'
+		,	function onListening()
+			{
+				var	addr
+				=	server.address()
+				,	bind
+				=	(typeof addr === 'string')
+					?	'pipe ' + addr
+					:	'port ' + addr.port;
+
+				log.info('Server: Listening on ' + bind);
+			}
+		);
+
+		//	Escucho si ocurrio un error en el server
+		server.on(
+			'error'
+		,	function onError(error)
+			{
+				if (error.syscall !== 'listen') {
+					throw error;
+				}
+
+				var	bind
+				=	(typeof port === 'string')
+					?	'Pipe ' + port
+					:	'Port ' + port;
+
+				//	Manejo los errores de una forma amigable
+				switch (error.code)
+				{
+					case 'EACCES':
+						log.error('El usuario no tiene permisos para acceder a '+bind+'.');
+						process.exit(1);
+						break;
+					case 'EADDRINUSE':
+						log.error(bind + ' se encuentra en uso.');
+						process.exit(1);
+						break;
+					default:
+						throw error;
+				}
+			}
+		);
+	}
+)
