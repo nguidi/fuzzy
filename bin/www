@@ -38,6 +38,8 @@ app.set('port', port);
 var	server
 =	http.createServer(app);
 
+global['io'] = require('socket.io')(server);
+
 //	Inicializamos la ORM
 app.get('orm').initialize(
 	{
@@ -60,6 +62,13 @@ app.get('orm').initialize(
 					log.error('ORM: El nombre '+name+' no puede ser utilizado. Cambie el nombre del modelo.');
 			}
 		)
+
+		io.on('connection', function(socket){
+			socket.on('chat message', function(msg){
+				console.log(socket.id)
+			    io.emit('chat message', msg);
+		  	});
+		});
 
 		//	Indico el puerto a escuchar
 		server.listen(port);

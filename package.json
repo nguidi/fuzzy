@@ -1,5 +1,5 @@
 {
-  "name": "compras-express",
+  "name": "fuzzy",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -12,7 +12,6 @@
     "cookie-parser": "~1.3.4",
     "debug": "~2.1.1",
     "express": "~4.12.2",
-    "jade": "~1.9.2",
     "lodash": "^3.6.0",
     "morgan": "~1.5.1",
     "sails-disk": "^0.10.7",
